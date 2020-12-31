@@ -1,55 +1,38 @@
-const http = require('http');
+const express = require('express');
 
-const server = http.createServer((req, res) => {
-    if (req.method === "GET" && req.url === '/hello') {
-        res.write("Hello World from 'GET'!");
-        res.end();
-    }
+const app = express();
 
-    if (req.method === "POST" && req.url === '/hello') {
-        res.write("Hello World from 'POST'!");
-        res.end();
-    }
-
-    if (req.url.startsWith('/me')) {
-
-        const urlAfterSlashMe = req.url.substr(3);
-
-        if (urlAfterSlashMe.startsWith("?")) {
-            // The requested url was "/me?name=<ANY_STRING>"
-            const namePart = urlAfterSlashMe.substr(6);
-            res.write(namePart);
-            res.end();
-        }
-        else if (urlAfterSlashMe.startsWith('/hello')) {
-
-            const urlAfterSlashHello = urlAfterSlashMe.substr(6);
-
-            if (urlAfterSlashHello.startsWith("?")) {
-                // The requested url was "/me/hello"
-                /**
-                 * This URL will have query parameters. Like - 
-                 * "/me/hello?name=<ANY_STRING>"
-                 * So, we have to extract that from our url.
-                 */
-                const namePart = urlAfterSlashHello.substr(6);
-                res.write(`Hello ${namePart}!`);
-                res.end();
-            }
-            else {
-                // The requested url was "/me/hello/<ANY_STRING>"
-                const namePart = urlAfterSlashHello.substr(1);
-                res.write(`Hello ${namePart}!`);
-                res.end();
-            }
-        }
-        else {
-            // The requested url was something like "/me/<ANY_STRING>"
-            const namePart = urlAfterSlashMe.substr(1);
-            res.write(namePart);
-            res.end();
-        }
-    }
+app.get("/hello", (req, res) => {
+    res.send("Hello World from 'GET'!");
 });
 
-server.listen(7050);
+app.post("/hello", (req, res) => {
+    res.send("Hello World from 'POST'!");
+});
+
+app.get("/me", (req, res) => {
+    const name = req.query.name;
+    res.send(name);
+});
+
+/**
+ * IMPORTANT - 
+ * Try to move this API below "/me/:name" and see the behaviour
+ * After moving this API below, run the request for "/me/hello?name=<YOUR_NAME>"
+ */
+app.get("/me/hello", (req, res) => {
+    const name = req.query.name;
+    res.send(`Hello ${name}!`);
+});
+
+app.get("/me/:name", (req, res) => {
+    const name = req.params.name;
+    res.send(name);
+});
+
+app.get("/me/hello/:name", (req, res) => {
+    const name = req.params.name;
+    res.send(`Hello ${name}!`);
+});
+
+app.listen(7050, () => console.log("Listening on port 7050..."));
