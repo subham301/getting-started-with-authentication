@@ -31,7 +31,6 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(3),
   },
   textField: {
-    width: '45ch',
     display: 'flex',
     'margin-left': 'auto',
     'margin-right': 'auto'

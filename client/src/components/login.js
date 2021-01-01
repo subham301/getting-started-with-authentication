@@ -1,12 +1,18 @@
 import React from 'react';
 import clsx from 'clsx';
 import { makeStyles } from '@material-ui/core/styles';
+import { Visibility, VisibilityOff } from '@material-ui/icons';
 import {
   Button,
   Card,
   CardContent,
   Typography,
+  InputLabel,
+  FormControl,
+  InputAdornment,
+  OutlinedInput,
   TextField,
+  IconButton,
   Modal
 } from '@material-ui/core';
 import { Redirect } from 'react-router-dom';
@@ -44,24 +50,21 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function UpdateProfile() {
+export default function Login() {
   const classes = useStyles();
   const [values, setValues] = React.useState({
-    name: '',
-    college: '',
-    'year-of-graduation': '',
+    username: '',
+    password: '',
   });
+
   const [invalidInput, setInvalidInput] = React.useState(false);
+
+  const [hidePassword, setHidePassword] = React.useState(true);
 
   const defaultErrorText = "Please enter all the required details!";
   const [errorDetails, setErrorDetails] = React.useState(defaultErrorText);
 
-  const [successfulUpdate, setSuccessfulUpdate] = React.useState(false);
-
-  const authToken = localStorage.getItem("authToken");
-  if (authToken === undefined || authToken === null) {
-    return <Redirect to="/" />;
-  }
+  const [successfulLogin, setSuccessfulLogin] = React.useState(false);
 
   const handleChange = (prop) => (event) => {
     setInvalidInput(false);
@@ -70,7 +73,11 @@ export default function UpdateProfile() {
     setValues({ ...values, [prop]: event.target.value });
   };
 
-  const handleRegistration = (event) => {
+  const handleMouseDownPassword = (event) => {
+    event.preventDefault();
+  };
+
+  const handleLogin = (event) => {
     event.preventDefault();
 
     let ifAnyFieldEmpty = false;
@@ -83,14 +90,15 @@ export default function UpdateProfile() {
       return;
     }
 
-    axios.put('/profile', values, {headers: {"auth-token": authToken}})
+    axios.post('/login', values)
       .then(res => {
-        setSuccessfulUpdate(true);
+        localStorage.setItem("authToken", res.headers['auth-token']);
+        setSuccessfulLogin(true);
       })
       .catch(err => {
-        if (err.response && err.response.status === 401) {
+        if (err.response && err.response.status === 400) {
           setInvalidInput(true);
-          setErrorDetails(`Please verify your credentials!`);
+          setErrorDetails(`Incorrect user-ID or password!`);
           return;
         }
         else {
@@ -100,7 +108,14 @@ export default function UpdateProfile() {
       });
   };
 
-  if (successfulUpdate) {
+  const storedAuthToken = localStorage.getItem("authToken");
+  if (storedAuthToken !== undefined && storedAuthToken !== null) {
+    window.location.reload();
+    return <Redirect to="/" />;
+  }
+
+  if (successfulLogin) {
+    window.location.reload();
     return <Redirect to="/" />
   }
 
@@ -109,45 +124,49 @@ export default function UpdateProfile() {
       <div className={classes.root}>
         <Card className={clsx(classes.textField)}>
           <CardContent className={clsx(classes.cardContent)}>
-            <Typography style={{ marginLeft: 'auto', marginRight: 'auto', marginBottom: '15px' }}><b>Update your Profile</b></Typography>
+            <Typography style={{ marginLeft: 'auto', marginRight: 'auto', marginBottom: '15px' }}><b>Create your Profile</b></Typography>
             <TextField
               className={clsx(classes.margin)}
               required
               id="filled-required"
-              label="Name"
+              label="User-ID"
               variant="outlined"
               fullWidth
-              value={values.name}
-              onChange={handleChange('name')}
+              value={values.username}
+              onChange={handleChange('username')}
             />
-            <TextField
-              className={clsx(classes.margin)}
-              required
-              id="filled-required"
-              label="College"
-              variant="outlined"
-              fullWidth
-              value={values.college}
-              onChange={handleChange('college')}
-            />
-            <TextField
-              className={clsx(classes.margin)}
-              required
-              id="filled-required"
-              label="Year of Graduation"
-              variant="outlined"
-              fullWidth
-              value={values['year-of-graduation']}
-              onChange={handleChange('year-of-graduation')}
-            />
+
+            <FormControl variant="outlined" fullWidth className={clsx(classes.margin)}>
+              <InputLabel htmlFor="input-password">Password</InputLabel>
+              <OutlinedInput
+                required
+                id="input-password"
+                type={hidePassword === false ? 'text' : 'password'}
+                value={values.password}
+                onChange={handleChange('password')}
+                endAdornment={
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={() => { setHidePassword(hidePassword === false ? true : false) }}
+                      onMouseDown={handleMouseDownPassword}
+                      edge="end"
+                    >
+                      {hidePassword === false ? <Visibility /> : <VisibilityOff />}
+                    </IconButton>
+                  </InputAdornment>
+                }
+                labelWidth={70}
+              />
+            </FormControl>
 
             <Button
               color='primary'
               variant='outlined'
               className={clsx(classes.margin)}
-              onClick={handleRegistration}
+              onClick={handleLogin}
             >
-              Update
+              Login
           </Button>
           </CardContent>
 
